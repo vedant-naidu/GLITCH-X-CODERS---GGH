@@ -24,9 +24,9 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FXWise | Hidden Fee Detector for International Payments",
+  title: "FXWise | Stop Losing Money on Hidden Forex Charges",
   description:
-    "FXWise reveals hidden forex spreads, effective exchange rates, and the cheapest international payment option.",
+    "Compare daily ECB exchange rates, hidden spreads (0.4%–4.0%), and verified fees to find the cheapest international transfer.",
   icons: {
     icon: [
       { url: "/favicon.ico" },

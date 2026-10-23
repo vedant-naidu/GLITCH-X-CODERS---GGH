@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { buildComparisonResult, buildHistoricalPoints } from "@/utils/finance";
 import { formatCurrency, formatDate, formatRate } from "@/utils/format";
 import { getRecommendationBadge, getPersonaNarrative } from "@/utils/recommendations";
+import { providerCatalog } from "@/data/providers";
 import { ComparisonFormValues, Persona } from "@/types/fintech";
 
 const comparisonSchema = z.object({
@@ -102,9 +103,52 @@ export function ComparisonWorkbench({
 
   const watchedValues = useWatch({ control: form.control });
 
+  const catalogMarkups = useMemo(() => providerCatalog.map((p) => p.pricing.exchangeMarkup * 100), []);
+  const dynamicMarkupRange = useMemo(() => {
+    const min = Math.min(...catalogMarkups).toFixed(1);
+    const max = Math.max(...catalogMarkups).toFixed(1);
+    return `${min}%–${max}%`;
+  }, [catalogMarkups]);
+
+  // V9: URL parameter hydration on mount
   useEffect(() => {
-    form.reset(defaultInput);
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const urlAmount = params.get("amount");
+    const urlSource = params.get("sourceCurrency");
+    const urlDest = params.get("destinationCurrency");
+    const urlPurpose = params.get("purpose");
+    const urlPersona = params.get("persona");
+
+    if (urlAmount || urlSource || urlDest || urlPurpose || urlPersona) {
+      form.reset({
+        amount: urlAmount && !isNaN(Number(urlAmount)) ? Number(urlAmount) : defaultInput.amount,
+        sourceCurrency: (urlSource as ComparisonFormValues["sourceCurrency"]) ?? defaultInput.sourceCurrency,
+        destinationCurrency: (urlDest as ComparisonFormValues["destinationCurrency"]) ?? defaultInput.destinationCurrency,
+        sourceCountry: defaultInput.sourceCountry,
+        destinationCountry: defaultInput.destinationCountry,
+        purpose: (urlPurpose as ComparisonFormValues["purpose"]) ?? defaultInput.purpose,
+        persona: (urlPersona as ComparisonFormValues["persona"]) ?? defaultInput.persona,
+      });
+    } else {
+      form.reset(defaultInput);
+    }
   }, [form]);
+
+  // V9: Synchronize watched form values to URL search params
+  useEffect(() => {
+    if (typeof window === "undefined" || !watchedValues) return;
+    const params = new URLSearchParams(window.location.search);
+    if (watchedValues.amount) params.set("amount", String(watchedValues.amount));
+    if (watchedValues.sourceCurrency) params.set("sourceCurrency", watchedValues.sourceCurrency);
+    if (watchedValues.destinationCurrency) params.set("destinationCurrency", watchedValues.destinationCurrency);
+    if (watchedValues.purpose) params.set("purpose", watchedValues.purpose);
+    if (watchedValues.persona) params.set("persona", watchedValues.persona);
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+    window.history.replaceState(null, "", newUrl);
+  }, [watchedValues]);
 
   useEffect(() => {
     const sourceCurrency = watchedValues?.sourceCurrency ?? defaultInput.sourceCurrency;
@@ -181,13 +225,15 @@ export function ComparisonWorkbench({
           <CardBody className="relative grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
             <div className="space-y-5">
               <Badge tone="accent" className="w-fit rounded-full px-4 py-2 text-[0.72rem] uppercase tracking-[0.32em]">
-                Real-time Rate Transparency
+                Daily ECB Reference Rate Transparency ({dynamicMarkupRange} markup range)
               </Badge>
               <div className="space-y-3">
                 <h1 className="max-w-3xl font-(--font-display) text-5xl leading-[0.95] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
                   {copy.title}
                 </h1>
-                <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">{copy.subtitle}</p>
+                <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">
+                  Compare daily ECB reference rates, verified hidden spreads ({dynamicMarkupRange}), and total delivered value before you send money abroad.
+                </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -348,6 +394,21 @@ export function ComparisonWorkbench({
                     </div>
                     <p className="text-sm leading-7 text-muted">{quote.provider.tagline}</p>
                     <p className="text-xs uppercase tracking-[0.3em] text-muted">{quote.provider.rails.join(" · ")}</p>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-muted">
+                      <span className="capitalize rounded bg-accent/10 px-2 py-0.5 text-accent border border-border">
+                        {quote.provider.category.replace("_", " ")}
+                      </span>
+                      <span>Verified: {quote.provider.lastVerifiedAt}</span>
+                      <span>·</span>
+                      <a
+                        href={quote.provider.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="underline text-accent hover:text-foreground"
+                      >
+                        Pricing Source ↗
+                      </a>
+                    </div>
                   </div>
                   <div className="grid gap-3 text-sm text-muted sm:grid-cols-2 md:min-w-85">
                     <QuoteMetric label="Advertised rate" value={formatRate(quote.advertisedRate)} />

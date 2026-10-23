@@ -28,6 +28,8 @@ export function getTransparencyBand(score: number): TransparencyBand {
 
 function calculateTransparencyScore(provider: ProviderDefinition, totalCostRatio: number): number {
   const { pricing } = provider;
+  const totalHiddenMarkup = pricing.exchangeMarkup + pricing.hiddenForexSpread;
+
   const base =
     100 -
     pricing.exchangeMarkup * 1900 -
@@ -36,7 +38,14 @@ function calculateTransparencyScore(provider: ProviderDefinition, totalCostRatio
     (100 - pricing.feeClarity) * 0.22 +
     pricing.speedScore * 0.12;
 
-  return Math.max(0, Math.min(100, Math.round(base)));
+  let score = Math.max(0, Math.min(100, Math.round(base)));
+
+  // V10 calibration rule: A provider with 3% or higher hidden spread cannot score "Good" (min 72)
+  if (totalHiddenMarkup >= 0.03) {
+    score = Math.min(score, 68);
+  }
+
+  return score;
 }
 
 export function quoteProvider(
