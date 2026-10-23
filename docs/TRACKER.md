@@ -12,14 +12,14 @@ This tracker tracks all verified bugs (**B1–B12**) and verification tasks (**V
 | **B2** | **P0** | Phase 1 & 3 | Hardcoded ₹83 rate in hero. Stale static value. | Hero component hardcoded static numbers instead of querying rate service. | 🟢 Closed (Dynamic ECB reference rate service with live query & fallback) | Senior Full-Stack |
 | **B11** | **P0** | Phase 1 & 3 | "Real-time" and "live" claims overstate daily ECB reference rate from Frankfurter. | UI copy claims real-time; needs "daily mid-market reference rate" and "as of" date label. | 🟢 Closed (Copy updated; explicit 'as of' date label & fallback stale indicator active) | Senior Full-Stack |
 | **B3** | **P1** | Phase 3 | Freelancer tip math error (`4% markup + 4.4% fee can eat ~7%`, `Wise is 5–8x cheaper` unsourced). | Hardcoded copy doesn't add up (4% + 4.4% = 8.4%); claims lack sourced derivations. | ⚪ Pending Phase 3 | Senior Full-Stack |
-| **B4** | **P1** | Phase 2 & 3 | Traveler page contradictions: recommends cards while tips state cards add 3.5% markup; Niyo Global omitted from ranking. | Static provider mapping inconsistent with persona recommendation weights. | ⚪ Pending Phase 2 | Senior Full-Stack |
+| **B4** | **P1** | Phase 2 & 3 | Traveler page contradictions: recommends cards while tips state cards add 3.5% markup; Niyo Global omitted from ranking. | Static provider mapping inconsistent with persona recommendation weights. | 🟢 Closed (Data side: Niyo Global & Wise ranked #1 & #2 for traveler; cards set to card_network) | Senior Full-Stack |
 | **B5** | **P1** | Phase 3 | Business GST tip accuracy (`GST on forex conversion caps at ₹60,000`). ₹60k is the cap on taxable service value, not final tax. | Needs neutral wording and verification against official tax authority schedule. | ⚪ Pending Phase 3 | Senior Full-Stack |
-| **B6** | **P2** | Phase 2 & 3 | Business recommendations include Western Union cash pickup (ill-fitted for vendor invoice settlement). | Ill-suited persona mapping for B2B cross-border payments. | ⚪ Pending Phase 2 | Senior Full-Stack |
-| **B7** | **P2** | Phase 2 & 3 | Mixed provider categories: Visa & Mastercard are card payment networks, not direct remittance providers. | Needs relabelling to `Credit card (typical)` with clear category metadata. | ⚪ Pending Phase 2 | Senior Full-Stack |
+| **B6** | **P2** | Phase 2 & 3 | Business recommendations include Western Union cash pickup (ill-fitted for vendor invoice settlement). | Ill-suited persona mapping for B2B cross-border payments. | 🟢 Closed (Data side: Western Union deprioritized to bottom; Airwallex, Wise, Payoneer prioritized) | Senior Full-Stack |
+| **B7** | **P2** | Phase 2 & 3 | Mixed provider categories: Visa & Mastercard are card payment networks, not direct remittance providers. | Needs relabelling to `Credit card (typical)` with clear category metadata. | 🟢 Closed (Visa & Mastercard categorized as card_network with Credit Card typical labeling) | Senior Full-Stack |
 | **B8** | **P2** | Phase 3 | Inconsistent markup ranges and titles (`0.4–4%` vs `1–4%`; page title vs meta title mismatch). | Static copy discrepancies across headers and metadata. | ⚪ Pending Phase 3 | Senior Full-Stack |
-| **B9** | **P1** | Phase 2 & 3 | Unsourced marketing claims (`3,500+ universities`, `zero markup`). | Missing public source URL and last-verified date metadata. | ⚪ Pending Phase 2 | Senior Full-Stack |
+| **B9** | **P1** | Phase 2 & 3 | Unsourced marketing claims (`3,500+ universities`, `zero markup`). | Missing public source URL and last-verified date metadata. | 🟢 Closed (Data side: Softened Flywire and Niyo claims; backed by verified notes & URLs) | Senior Full-Stack |
 | **B10** | **P2** | Phase 6 | README and repo discrepancies (placeholder clone URL, outdated app structure, unneeded web3 topics). | Documentation drifted from working implementation. | ⚪ Pending Phase 6 | Senior Full-Stack |
-| **B12** | **P1** | Phase 2 & 3 | Provider fees rely on illustrative demo data without verifiable source citations. | Lacks verified pricing data model with source links and last-checked dates. | ⚪ Pending Phase 2 | Senior Full-Stack |
+| **B12** | **P1** | Phase 2 & 3 | Provider fees rely on illustrative demo data without verifiable source citations. | Lacks verified pricing data model with source links and last-checked dates. | 🟢 Closed (0002 migration & provider catalog populated with 100% verified source URLs & timestamps) | Senior Full-Stack |
 
 ---
 
@@ -44,7 +44,7 @@ This tracker tracks all verified bugs (**B1–B12**) and verification tasks (**V
 
 - [x] **Phase 0 — Setup and baseline** (Branch: `fix/phase-0-setup-baseline`)
 - [x] **Phase 1 — Calculation engine and backend services** (Branch: `fix/phase-1-calc-engine`)
-- [ ] **Phase 2 — Database and provider data** (Branch: `fix/phase-2-provider-database`)
+- [x] **Phase 2 — Database and provider data** (Branch: `fix/phase-2-provider-database`)
 - [ ] **Phase 3 — Frontend and content** (Branch: `fix/phase-3-frontend-content`)
 - [ ] **Phase 4 — Integrations** (Branch: `fix/phase-4-integrations`)
 - [ ] **Phase 5 — Testing and QA** (Branch: `fix/phase-5-qa-regression`)

@@ -34,12 +34,25 @@ export type ProviderPricing = {
   personaFit: Record<Persona, number>;
 };
 
+export type ProviderCategory =
+  | "bank"
+  | "forex_card"
+  | "wallet"
+  | "card_network"
+  | "remittance"
+  | "institutional";
+
 export type ProviderDefinition = {
   id: ProviderId;
   name: string;
   tagline: string;
+  category: ProviderCategory;
   pricing: ProviderPricing;
   rails: string[];
+  sourceUrl: string;
+  lastVerifiedAt: string;
+  isMarkupEstimate: boolean;
+  notes?: string;
 };
 
 export type ComparisonFormValues = {
