@@ -5,10 +5,10 @@ interface BrandMarkProps {
   size?: number;
 }
 
-export function BrandMark({ className = "", size = 40 }: BrandMarkProps) {
+export function BrandMark({ className = "", size = 36 }: BrandMarkProps) {
   return (
     <div
-      className={`relative flex items-center justify-center overflow-hidden rounded-[1rem] border border-[var(--border)] shadow-[var(--shadow)] transition-transform hover:scale-105 ${className}`}
+      className={`relative flex items-center justify-center overflow-hidden rounded-lg bg-[#141416] border border-white/10 shadow-xs transition-transform group-hover:scale-105 ${className}`}
       style={{ width: size, height: size }}
     >
       <Image
@@ -16,7 +16,7 @@ export function BrandMark({ className = "", size = 40 }: BrandMarkProps) {
         alt="FXWise Logo"
         width={size}
         height={size}
-        className="h-full w-full object-contain"
+        className="h-full w-full object-contain p-0.5"
         priority
       />
     </div>
