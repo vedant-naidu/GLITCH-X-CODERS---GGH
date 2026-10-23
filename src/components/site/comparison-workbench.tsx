@@ -46,21 +46,21 @@ const purposeOptions = [
 
 const chartColors = ["#c4841d", "#4a7856", "#7c6f63", "#b69a71", "#d8c5ad"];
 
+const defaultInput: ComparisonFormValues = {
+  amount: 1000,
+  sourceCurrency: "USD",
+  destinationCurrency: "INR",
+  sourceCountry: "United States",
+  destinationCountry: "India",
+  purpose: "education",
+  persona: "student",
+};
+
 export function ComparisonWorkbench({
   copy,
 }: {
   copy: { title: string; subtitle: string; highlights: readonly string[] };
 }) {
-  const defaultInput: ComparisonFormValues = {
-    amount: 1000,
-    sourceCurrency: "USD",
-    destinationCurrency: "INR",
-    sourceCountry: "United States",
-    destinationCountry: "India",
-    purpose: "education",
-    persona: "student",
-  };
-
   const [liveRate, setLiveRate] = useState<number | null>(null);
   const [liveRateStatus, setLiveRateStatus] = useState<"loading" | "ready" | "error">("loading");
 
@@ -144,6 +144,7 @@ export function ComparisonWorkbench({
     [watchedValues],
   );
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const result = useMemo(() => buildComparisonResult(currentValues, liveRate ?? undefined), [currentValues, liveRate]);
 
   const historical = useMemo(() => buildHistoricalPoints(result), [result]);
