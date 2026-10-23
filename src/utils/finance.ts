@@ -1,4 +1,6 @@
 import { providerCatalog } from "@/data/providers";
+import { calculateRemittance } from "@/lib/calc-engine";
+import { getFallbackRate } from "@/lib/rate-service";
 import {
   ComparisonFormValues,
   ComparisonResult,
@@ -9,17 +11,6 @@ import {
   TransparencyBand,
 } from "@/types/fintech";
 
-const liveRates: Record<string, number> = {
-  USDINR: 83.12,
-  EURINR: 89.75,
-  GBPINR: 104.91,
-  CADINR: 61.24,
-  AUDINR: 54.67,
-  SGDINR: 61.88,
-  AEDINR: 22.63,
-  INRUSD: 0.012,
-};
-
 const bandThresholds: Array<{ min: number; label: TransparencyBand }> = [
   { min: 86, label: "excellent" },
   { min: 72, label: "good" },
@@ -27,25 +18,15 @@ const bandThresholds: Array<{ min: number; label: TransparencyBand }> = [
   { min: 0, label: "poor" },
 ];
 
-export function getLiveRate(sourceCurrency: string, destinationCurrency: string) {
-  const key = `${sourceCurrency}${destinationCurrency}`;
-  if (liveRates[key]) {
-    return liveRates[key];
-  }
-
-  const inverseKey = `${destinationCurrency}${sourceCurrency}`;
-  if (liveRates[inverseKey]) {
-    return 1 / liveRates[inverseKey];
-  }
-
-  return 1;
+export function getLiveRate(sourceCurrency: string, destinationCurrency: string): number {
+  return getFallbackRate(sourceCurrency, destinationCurrency).rate;
 }
 
 export function getTransparencyBand(score: number): TransparencyBand {
   return bandThresholds.find((band) => score >= band.min)?.label ?? "poor";
 }
 
-function calculateTransparencyScore(provider: ProviderDefinition, totalCostRatio: number) {
+function calculateTransparencyScore(provider: ProviderDefinition, totalCostRatio: number): number {
   const { pricing } = provider;
   const base =
     100 -
@@ -63,46 +44,45 @@ export function quoteProvider(
   input: ComparisonFormValues,
   liveRate: number,
 ): ProviderQuote {
-  const { amount } = input;
   const pricing = provider.pricing;
-  const advertisedRate = liveRate * (1 - pricing.exchangeMarkup);
-  const effectiveRate = liveRate * (1 - pricing.exchangeMarkup - pricing.hiddenForexSpread);
+  const isRateSourcePerTarget = input.sourceCurrency === "INR" && input.destinationCurrency !== "INR";
 
-  const hiddenExchangeMarkup = amount * liveRate - amount * advertisedRate;
-  const hiddenForexSpread = amount * advertisedRate - amount * effectiveRate;
-  const fixedFees = pricing.fixedFee;
-  const percentageFees = amount * pricing.percentageFee;
-  const gst = (fixedFees + percentageFees + pricing.processingFee) * pricing.gstRate;
-  const processingCharges = pricing.processingFee;
+  const calc = calculateRemittance({
+    amount: input.amount,
+    midMarketRate: liveRate,
+    exchangeMarkup: pricing.exchangeMarkup,
+    hiddenForexSpread: pricing.hiddenForexSpread,
+    fixedFee: pricing.fixedFee,
+    percentageFee: pricing.percentageFee,
+    processingFee: pricing.processingFee,
+    gstRate: pricing.gstRate,
+    isRateSourcePerTarget,
+  });
 
-  const feeTotal = fixedFees + percentageFees + gst + processingCharges;
-  const finalAmountReceived = amount * effectiveRate - feeTotal * effectiveRate;
-  const totalCost = amount * liveRate - finalAmountReceived;
-  const totalHiddenLoss = hiddenExchangeMarkup + hiddenForexSpread + feeTotal * effectiveRate;
-  const totalCostRatio = totalCost / Math.max(amount * liveRate, 1);
+  const totalCostRatio = calc.totalCost / Math.max(input.amount * (isRateSourcePerTarget ? 1 : liveRate), 1);
   const transparencyScore = calculateTransparencyScore(provider, totalCostRatio);
 
   return {
     provider,
     liveRate,
-    advertisedRate,
-    effectiveRate,
-    hiddenExchangeMarkup,
-    hiddenForexSpread,
-    totalHiddenLoss,
-    fixedFees,
-    percentageFees,
-    gst,
-    processingCharges,
-    totalCost,
-    finalAmountReceived,
+    advertisedRate: calc.advertisedRate,
+    effectiveRate: calc.effectiveRate,
+    hiddenExchangeMarkup: calc.markupLoss,
+    hiddenForexSpread: calc.spreadLoss,
+    totalHiddenLoss: calc.markupLoss + calc.spreadLoss + calc.totalFeesSource,
+    fixedFees: calc.fixedFee,
+    percentageFees: calc.percentageFeeAmount,
+    gst: calc.gstAmount,
+    processingCharges: calc.processingFee,
+    totalCost: calc.totalCost,
+    finalAmountReceived: calc.amountReceived,
     transparencyScore,
     transparencyBand: getTransparencyBand(transparencyScore),
     savingsVsMedian: 0,
   };
 }
 
-function weightedScore(quote: ProviderQuote, persona: Persona, bestAmountReceived: number) {
+function weightedScore(quote: ProviderQuote, persona: Persona, bestAmountReceived: number): number {
   const costScore = (quote.finalAmountReceived / Math.max(bestAmountReceived, 1)) * 100;
   const transparencyScore = quote.transparencyScore;
   const speedScore = quote.provider.pricing.speedScore;
@@ -159,7 +139,7 @@ export function buildHistoricalPoints(result: ComparisonResult): HistoricalPoint
   ];
 }
 
-export function getPersonaRecommendedProvider(persona: Persona) {
+export function getPersonaRecommendedProvider(persona: Persona): ProviderDefinition {
   const match = providerCatalog.reduce<ProviderDefinition | null>((best, provider) => {
     if (!best) return provider;
     return provider.pricing.personaFit[persona] > best.pricing.personaFit[persona] ? provider : best;

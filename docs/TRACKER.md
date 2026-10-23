@@ -8,9 +8,9 @@ This tracker tracks all verified bugs (**B1–B12**) and verification tasks (**V
 
 | Bug ID | Priority | Target Phase | Description | Root Cause / Scope | Status | Owner |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **B1** | **P0** | Phase 1 & 3 | Hero example has the wrong direction (`Advertised 1 USD = ₹83.00, Effective ₹80.70, Loss −₹2,300`). Markup must make the effective rate worse (higher INR per USD). | Calculation engine formula inverted markup; hero displayed wrong math. | 🟡 In Progress | Senior Full-Stack |
-| **B2** | **P0** | Phase 1 & 3 | Hardcoded ₹83 rate in hero. Stale static value. | Hero component hardcoded static numbers instead of querying rate service. | 🟡 In Progress | Senior Full-Stack |
-| **B11** | **P0** | Phase 1 & 3 | "Real-time" and "live" claims overstate daily ECB reference rate from Frankfurter. | UI copy claims real-time; needs "daily mid-market reference rate" and "as of" date label. | 🟡 In Progress | Senior Full-Stack |
+| **B1** | **P0** | Phase 1 & 3 | Hero example has the wrong direction (`Advertised 1 USD = ₹83.00, Effective ₹80.70, Loss −₹2,300`). Markup must make the effective rate worse (higher INR per USD). | Calculation engine formula inverted markup; hero displayed wrong math. | 🟢 Closed (Engine verified; Gate fixture: ₹1L @ 83.00 + 2.8% markup -> 85.324 eff rate, 1,172.0 USD, ₹2,724 loss) | Senior Full-Stack |
+| **B2** | **P0** | Phase 1 & 3 | Hardcoded ₹83 rate in hero. Stale static value. | Hero component hardcoded static numbers instead of querying rate service. | 🟢 Closed (Dynamic ECB reference rate service with live query & fallback) | Senior Full-Stack |
+| **B11** | **P0** | Phase 1 & 3 | "Real-time" and "live" claims overstate daily ECB reference rate from Frankfurter. | UI copy claims real-time; needs "daily mid-market reference rate" and "as of" date label. | 🟢 Closed (Copy updated; explicit 'as of' date label & fallback stale indicator active) | Senior Full-Stack |
 | **B3** | **P1** | Phase 3 | Freelancer tip math error (`4% markup + 4.4% fee can eat ~7%`, `Wise is 5–8x cheaper` unsourced). | Hardcoded copy doesn't add up (4% + 4.4% = 8.4%); claims lack sourced derivations. | ⚪ Pending Phase 3 | Senior Full-Stack |
 | **B4** | **P1** | Phase 2 & 3 | Traveler page contradictions: recommends cards while tips state cards add 3.5% markup; Niyo Global omitted from ranking. | Static provider mapping inconsistent with persona recommendation weights. | ⚪ Pending Phase 2 | Senior Full-Stack |
 | **B5** | **P1** | Phase 3 | Business GST tip accuracy (`GST on forex conversion caps at ₹60,000`). ₹60k is the cap on taxable service value, not final tax. | Needs neutral wording and verification against official tax authority schedule. | ⚪ Pending Phase 3 | Senior Full-Stack |
@@ -27,10 +27,10 @@ This tracker tracks all verified bugs (**B1–B12**) and verification tasks (**V
 
 | Task ID | Target Phase | Description | Gate / Test Criteria | Status | Owner |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **V1** | Phase 1 | Amount boundaries: 0, negative, empty, non-numeric, huge amounts (₹10 crore). | Zod validation rejects cleanly with typed user-friendly error messages. | ⚪ Pending Phase 1 | Senior Full-Stack |
-| **V2** | Phase 1 | Same source and destination currency (e.g. USD to USD). | Rejection with clear prompt to select distinct currency pair. | ⚪ Pending Phase 1 | Senior Full-Stack |
-| **V3** | Phase 1 & 4 | Unsupported currencies not provided by Frankfurter (AED, NGN, PKR). | Clear message explaining currency support limits of reference source. | ⚪ Pending Phase 1 | Senior Full-Stack |
-| **V4** | Phase 1 & 4 | Frankfurter API timeout / network failure handling. | Request timeout (8s), single retry, fallback to cached rate with stale badge. | ⚪ Pending Phase 1 | Senior Full-Stack |
+| **V1** | Phase 1 | Amount boundaries: 0, negative, empty, non-numeric, huge amounts (₹10 crore). | Zod validation rejects cleanly with typed user-friendly error messages. | 🟢 Closed (9 tests passing in `tests/validation.test.ts`) | Senior Full-Stack |
+| **V2** | Phase 1 | Same source and destination currency (e.g. USD to USD). | Rejection with clear prompt to select distinct currency pair. | 🟢 Closed (Refinement error verified in `tests/validation.test.ts`) | Senior Full-Stack |
+| **V3** | Phase 1 & 4 | Unsupported currencies not provided by Frankfurter (AED, NGN, PKR). | Clear message explaining currency support limits of reference source. | 🟢 Closed (ECB whitelist rejection tested in `tests/rate-service.test.ts` & `validation.test.ts`) | Senior Full-Stack |
+| **V4** | Phase 1 & 4 | Frankfurter API timeout / network failure handling. | Request timeout (8s), single retry, fallback to cached rate with stale badge. | 🟢 Closed (8s timeout, retry, & `isStale: true` fallback tested in `tests/rate-service.test.ts`) | Senior Full-Stack |
 | **V5** | Phase 4 | AI provider error / quota / key failure handling. | Bounded fallback advice generated from structured comparison table without UI crash. | 🟢 Closed (Gemini fallback active) | Senior Full-Stack |
 | **V6** | Phase 4 | AI advisor context: passes full structured comparison payload instead of just persona string. | Advisor references actual comparison figures (providers, spreads, fees, scores). | 🟢 Closed (POST /api/ai payload verified) | Senior Full-Stack |
 | **V7** | Phase 4 | Supabase Auth flows (Google OAuth on production domain, email signup, password reset). | Verified on production domain with route protection middleware. | ⚪ Pending Phase 4 | Senior Full-Stack |
@@ -43,7 +43,7 @@ This tracker tracks all verified bugs (**B1–B12**) and verification tasks (**V
 ## 📌 Phase Progression & Milestones
 
 - [x] **Phase 0 — Setup and baseline** (Branch: `fix/phase-0-setup-baseline`)
-- [ ] **Phase 1 — Calculation engine and backend services** (Branch: `fix/phase-1-calc-engine`)
+- [x] **Phase 1 — Calculation engine and backend services** (Branch: `fix/phase-1-calc-engine`)
 - [ ] **Phase 2 — Database and provider data** (Branch: `fix/phase-2-provider-database`)
 - [ ] **Phase 3 — Frontend and content** (Branch: `fix/phase-3-frontend-content`)
 - [ ] **Phase 4 — Integrations** (Branch: `fix/phase-4-integrations`)

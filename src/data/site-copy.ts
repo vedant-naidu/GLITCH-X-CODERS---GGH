@@ -6,6 +6,6 @@ export const siteCopy = {
     "Hidden Fee Detector",
     "Transparency Score",
     "Persona-Based Recommendations",
-    "Real-time Rate Transparency",
+    "Daily ECB Reference Rate Transparency",
   ],
 } as const;

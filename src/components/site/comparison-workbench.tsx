@@ -63,6 +63,8 @@ export function ComparisonWorkbench({
 }) {
   const [liveRate, setLiveRate] = useState<number | null>(null);
   const [liveRateStatus, setLiveRateStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [rateDate, setRateDate] = useState<string | null>(null);
+  const [rateIsStale, setRateIsStale] = useState<boolean>(false);
 
   const [assistantNotes, setAssistantNotes] = useState(
     "Ask: Should I use Wise or PayPal? What is the cheapest way to pay tuition in Canada?",
@@ -117,15 +119,24 @@ export function ComparisonWorkbench({
           `/api/exchange?from=${encodeURIComponent(sourceCurrency)}&to=${encodeURIComponent(destinationCurrency)}`,
           { signal: controller.signal },
         );
-        const data = (await response.json()) as { rate?: number };
+        const data = (await response.json()) as {
+          rate?: number;
+          date?: string;
+          asOf?: string;
+          isStale?: boolean;
+        };
 
         if (!controller.signal.aborted) {
           setLiveRate(typeof data.rate === "number" ? data.rate : null);
+          setRateDate(data.asOf ?? data.date ?? null);
+          setRateIsStale(Boolean(data.isStale));
           setLiveRateStatus(typeof data.rate === "number" && data.rate > 0 ? "ready" : "error");
         }
       } catch {
         if (!controller.signal.aborted) {
           setLiveRate(null);
+          setRateDate(null);
+          setRateIsStale(false);
           setLiveRateStatus("error");
         }
       }
@@ -295,7 +306,10 @@ export function ComparisonWorkbench({
           </CardHeader>
           <CardBody className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <ValuePill label="Live exchange rate" value={liveRateStatus === "ready" && liveRate ? formatRate(liveRate) : "Loading..."} />
+              <ValuePill
+                label={`Daily ECB reference rate${rateDate ? ` (${rateDate})` : ""}${rateIsStale ? " [Fallback]" : ""}`}
+                value={liveRateStatus === "ready" && liveRate ? formatRate(liveRate) : liveRateStatus === "error" ? "Unavailable" : "Loading..."}
+              />
               <ValuePill label="Effective rate" value={formatRate(result.bestProvider.effectiveRate)} />
               <ValuePill label="Total hidden loss" value={formatCurrency(result.bestProvider.totalCost, result.input.sourceCurrency)} emphasis />
               <ValuePill label="Savings vs PayPal" value={formatCurrency(result.estimatedSavings, result.input.destinationCurrency)} emphasis />

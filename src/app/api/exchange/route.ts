@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
-import { env } from "@/lib/env";
-
-type FrankfurterResponse = {
-  amount: number;
-  base: string;
-  date: string;
-  rates: Record<string, number>;
-};
+import { getExchangeRate, RateServiceError } from "@/lib/rate-service";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,34 +7,27 @@ export async function GET(request: Request) {
   const to = searchParams.get("to") ?? "INR";
 
   try {
-    const frankfurter = await fetch(`${env.frankfurterBaseUrl}/latest?amount=1&from=${from}&to=${to}`, {
-      cache: "no-store",
-    });
-
-    if (!frankfurter.ok) {
-      throw new Error("Frankfurter request failed");
+    const rateData = await getExchangeRate(from, to);
+    return NextResponse.json(rateData, { status: 200 });
+  } catch (err: unknown) {
+    const rateError = err as RateServiceError;
+    if (rateError?.code === "UNSUPPORTED_CURRENCY") {
+      return NextResponse.json(
+        {
+          error: rateError.error,
+          code: rateError.code,
+          supportedCurrencies: rateError.supportedCurrencies,
+        },
+        { status: 400 },
+      );
     }
 
-    const data = (await frankfurter.json()) as FrankfurterResponse;
-    const rate = data.rates[to] ?? 1;
-
-    return NextResponse.json({
-      provider: "Frankfurter",
-      from,
-      to,
-      rate,
-      date: data.date,
-    });
-  } catch {
     return NextResponse.json(
       {
-        provider: "FXWise fallback",
-        from,
-        to,
-        rate: 1,
-        error: "Live exchange rate service unavailable",
+        error: "Exchange rate service encountered an unrecoverable failure",
+        details: err instanceof Error ? err.message : String(err),
       },
-      { status: 503 },
+      { status: 500 },
     );
   }
 }
