@@ -128,7 +128,7 @@ Example:
 | State Management | Zustand |
 | Forms | React Hook Form + Zod |
 | Charts | Recharts |
-| AI | OpenAI API |
+| AI | Google Gemini API (@google/genai) |
 | Deployment | Vercel |
 
 ---
@@ -181,7 +181,8 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-OPENAI_API_KEY=
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.5-flash-lite
 
 EXCHANGE_RATE_API_KEY=
 ```
@@ -223,7 +224,7 @@ Protected routes include:
 
 - Frankfurter API
 - ExchangeRate API
-- OpenAI API
+- Google Gemini API
 - Supabase
 
 ---

@@ -1,33 +1,26 @@
 import { NextResponse } from "next/server";
-import { createOpenAIClient } from "@/lib/openai";
+import { generateFinancialAdvice } from "@/lib/gemini";
 import { buildComparisonResult } from "@/utils/finance";
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const comparison = buildComparisonResult(body.comparison);
-  const client = createOpenAIClient();
+  try {
+    const body = await request.json();
+    const comparison = buildComparisonResult(body.comparison);
 
-  if (!client) {
-    return NextResponse.json({
-      answer: `${comparison.bestProvider.provider.name} is the strongest option in this scenario because it keeps hidden fees and spread under control while preserving more of the transfer value.`,
-      sources: [comparison.bestProvider.provider.name],
+    const advice = await generateFinancialAdvice({
+      question: body.question,
+      comparison,
     });
+
+    return NextResponse.json(advice);
+  } catch (error) {
+    console.error("Error in /api/ai POST handler:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to generate AI financial advice",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
-
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      {
-        role: "system",
-        content:
-          "You are FXWise, a fintech assistant. Answer using the supplied comparison data only and reference the current providers, costs, and transparency scores.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify({ question: body.question, comparison }),
-      },
-    ],
-  });
-
-  return NextResponse.json({ answer: response.output_text, sources: comparison.quotes.slice(0, 3).map((quote) => quote.provider.name) });
 }

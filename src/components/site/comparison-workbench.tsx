@@ -67,6 +67,31 @@ export function ComparisonWorkbench({
   const [assistantNotes, setAssistantNotes] = useState(
     "Ask: Should I use Wise or PayPal? What is the cheapest way to pay tuition in Canada?",
   );
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  async function handleAskAi() {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: assistantNotes,
+          comparison: result,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to get advice");
+      const data = await res.json();
+      setAiAnswer(data.answer);
+    } catch {
+      setAiError("Could not retrieve AI response. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   const form = useForm<ComparisonFormValues>({
     resolver: zodResolver(comparisonSchema),
@@ -387,9 +412,19 @@ export function ComparisonWorkbench({
           <CardBody className="space-y-4">
             <Textarea value={assistantNotes} onChange={(event) => setAssistantNotes(event.target.value)} />
             <div className="rounded-[1.25rem] border border-border bg-accent/10 p-4 text-sm leading-7 text-foreground">
-              {result.bestProvider.provider.name} is currently the strongest recommendation for this comparison because it preserves more of the send amount while keeping the effective rate and hidden charges under control.
+              {aiLoading ? (
+                <div className="flex items-center gap-2 text-muted">
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
+                  <span>Consulting Gemini AI Financial Advisor...</span>
+                </div>
+              ) : (
+                aiAnswer || `${result.bestProvider.provider.name} is currently the strongest recommendation for this comparison because it preserves more of the send amount while keeping the effective rate and hidden charges under control.`
+              )}
             </div>
-            <Button type="button">Ask FXWise</Button>
+            {aiError && <p className="text-xs text-rose-500">{aiError}</p>}
+            <Button type="button" onClick={handleAskAi} disabled={aiLoading}>
+              {aiLoading ? "Analyzing..." : "Ask FXWise"}
+            </Button>
           </CardBody>
         </Card>
 
